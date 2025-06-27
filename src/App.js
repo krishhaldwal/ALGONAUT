@@ -2,11 +2,10 @@ import STRIVER_DSA_SHEET from './problems';
 import React, { useState, useEffect } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from "react-markdown";
+import { Trash, Timer, Play, Pause,Repeat, MoonStars, Sun, RocketLaunch,Notepad,Copy,CheckCircle } from "phosphor-react";
 import "./App.css";
 
 const ai = new GoogleGenerativeAI(process.env.REACT_APP_GENAI_API_KEY);
-
-
 
 function App() {
   const [query, setQuery] = useState("");
@@ -20,75 +19,73 @@ function App() {
   
 
   const [timeLeft, setTimeLeft] = useState(() => {
-  const savedTime = localStorage.getItem("focus-timer-timeLeft");
-  return savedTime ? parseInt(savedTime, 10) : 45 * 60;
+    const savedTime = localStorage.getItem("focus-timer-timeLeft");
+    return savedTime ? parseInt(savedTime, 10) : 45 * 60;
   });
+  
   const [timerRunning, setTimerRunning] = useState(() => {
-  const savedRunning = localStorage.getItem("focus-timer-running");
-  return savedRunning === "true"; // returns true or false
-});
+    const savedRunning = localStorage.getItem("focus-timer-running");
+    return savedRunning === "true";
+  });
 
   const [tasks, setTasks] = useState(() => {
-  const saved = localStorage.getItem("user-tasks");
-  const savedDate = localStorage.getItem("user-tasks-date");
-  const today = new Date().toDateString();
-  return saved && savedDate === today ? JSON.parse(saved) : [];
-});
+    const saved = localStorage.getItem("user-tasks");
+    const savedDate = localStorage.getItem("user-tasks-date");
+    const today = new Date().toDateString();
+    return saved && savedDate === today ? JSON.parse(saved) : [];
+  });
 
-useEffect(() => {
-  localStorage.setItem("focus-timer-timeLeft", timeLeft);
-  localStorage.setItem("focus-timer-running", timerRunning);
-}, [timeLeft, timerRunning]);
+  useEffect(() => {
+    localStorage.setItem("focus-timer-timeLeft", timeLeft);
+    localStorage.setItem("focus-timer-running", timerRunning);
+  }, [timeLeft, timerRunning]);
 
+  useEffect(() => {
+    let timer;
+    if (timerRunning && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setTimerRunning(false);
+      alert("⏰ Time's up! Take a short break.");
+    }
+    return () => clearInterval(timer);
+  }, [timerRunning, timeLeft]);
 
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
 
-useEffect(() => {
-  let timer;
-  if (timerRunning && timeLeft > 0) {
-    timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-  } else if (timeLeft === 0) {
+  const resetTimer = () => {
+    setTimeLeft(45 * 60);
     setTimerRunning(false);
-    alert("⏰ Time’s up! Take a short break.");
-  }
-  return () => clearInterval(timer);
-}, [timerRunning, timeLeft]);
+  };
 
-const formatTime = (seconds) => {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-};
+  useEffect(() => {
+    localStorage.setItem("user-tasks", JSON.stringify(tasks));
+    localStorage.setItem("user-tasks-date", new Date().toDateString());
+  }, [tasks]);
 
-const resetTimer = () => {
-  setTimeLeft(45 * 60);
-  setTimerRunning(false);
-};
+  const addTask = () => {
+    if (newTask.trim() === "") return;
+    setTasks([...tasks, { text: newTask.trim(), completed: false }]);
+    setNewTask("");
+  };
 
-useEffect(() => {
-  localStorage.setItem("user-tasks", JSON.stringify(tasks));
-  localStorage.setItem("user-tasks-date", new Date().toDateString());
-}, [tasks]);
+  const toggleTask = (index) => {
+    const updated = [...tasks];
+    updated[index].completed = !updated[index].completed;
+    setTasks(updated);
+  };
 
-const addTask = () => {
-  if (newTask.trim() === "") return;
-  setTasks([...tasks, { text: newTask.trim(), completed: false }]);
-  setNewTask("");
-};
-
-const toggleTask = (index) => {
-  const updated = [...tasks];
-  updated[index].completed = !updated[index].completed;
-  setTasks(updated);
-};
-
-const deleteTask = (index) => {
-  const updated = [...tasks];
-  updated.splice(index, 1);
-  setTasks(updated);
-};
-
+  const deleteTask = (index) => {
+    const updated = [...tasks];
+    updated.splice(index, 1);
+    setTasks(updated);
+  };
 
   const handleAsk = async () => {
     if (!query.trim()) return;
@@ -118,28 +115,18 @@ const deleteTask = (index) => {
     Be friendly but concise. Use visual metaphors, analogies, and step-by-step breakdowns to make complex topics easier. Always aim to boost both conceptual clarity and problem-solving skills. 
     Easter Egg Rule:
 
-Whenever the user enters any message that includes the word "khushi" (case-insensitive), ignore the DSA context and instead respond with a sweet, warm compliment about Khushi. Vary the responses each time. Examples include:
 
-“Khushi must be an absolutely wonderful person — just hearing her name brings a smile.”
-
-“Sounds like Khushi is the kind of girl who makes everything brighter around her.”
-
-“Anyone with the name Khushi is destined to bring joy. she is the sweetest girl !”
-
-dont use these exact lines , create new compliments and cute lines on your own every time.
-
-Never mention that this is an Easter egg or that it's pre-programmed — just respond naturally, like a charming surprise.
 
 Humorous Redirect for Off-Topic Queries:
 If the user asks anything unrelated to DSA or Khushi, respond with playful humor and gently redirect them:
 
 Examples:
 
-“I am not trained in love advice, pizza recipes, or quantum physics. But if you have got a graph problem, i am all yours!”
+"I am not trained in love advice, pizza recipes, or quantum physics. But if you have got a graph problem, i am all yours!"
 
-“Error 404: Brain not found for non-DSA topics. Try Arrays, not Astrology.”
+"Error 404: Brain not found for non-DSA topics. Try Arrays, not Astrology."
 
-“As much as I did love to discuss alien invasions, how about we tackle a tree traversal instead?”
+"As much as I did love to discuss alien invasions, how about we tackle a tree traversal instead?"
 
 Maintain a light, sassy tone while keeping the user focused on DSA and coding.
 
@@ -159,32 +146,30 @@ the response should be funny and humorous if its not related to DSA or Khushi. a
   };
 
   useEffect(() => {
-  const savedNotes = localStorage.getItem("dsa_notes");
-  if (savedNotes) setNotes(savedNotes);
-}, []);
-
-  
+    const savedNotes = localStorage.getItem("dsa_notes");
+    if (savedNotes) setNotes(savedNotes);
+  }, []);
 
   const generateRandomProblems = () => {
-  const shuffled = [...STRIVER_DSA_SHEET].sort(() => 0.5 - Math.random());
-  const selected = shuffled.slice(0, 5);
-  setRandomProblems(selected);
-  localStorage.setItem("dailyProblems", JSON.stringify(selected));
-};
+    const shuffled = [...STRIVER_DSA_SHEET].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 5);
+    setRandomProblems(selected);
+    localStorage.setItem("dailyProblems", JSON.stringify(selected));
+  };
 
-useEffect(() => {
-  const saved = localStorage.getItem("dailyProblems");
-  if (saved) {
-    setRandomProblems(JSON.parse(saved));
-  } else {
-    generateRandomProblems();
-  }
-}, []);
+  useEffect(() => {
+    const saved = localStorage.getItem("dailyProblems");
+    if (saved) {
+      setRandomProblems(JSON.parse(saved));
+    } else {
+      generateRandomProblems();
+    }
+  }, []);
 
   const handleNotesChange = (e) => {
-  const updated = e.target.value;
-  setNotes(updated);
-  localStorage.setItem("dsa_notes", updated);
+    const updated = e.target.value;
+    setNotes(updated);
+    localStorage.setItem("dsa_notes", updated);
   };
 
   const handleCopyResponse = () => {
@@ -193,205 +178,250 @@ useEffect(() => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  
-
   useEffect(() => {
-  document.documentElement.classList.toggle("dark", darkMode);
-}, [darkMode]);
-
-  
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
 
   return (
     <div className={`app ${darkMode ? "dark" : "light"} min-h-screen flex flex-col`}>
-      <header className="sticky top-0 z-10 bg-opacity-90 backdrop-blur-lg py-4 px-6 flex justify-center items-center shadow-lg">
-        <div className="flex justify-between items-center w-full ">
-          <h1 className="text-3xl ml-14 font-bold flex items-center gap-2">
-            <span></span> ALGONAUT
-          </h1>
+      {/* Floating particles background */}
+      <div className="particles-bg">
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+      </div>
+
+      <header className="glass-header sticky top-0 z-20 py-4 px-6 flex justify-center items-center">
+        <div className="flex justify-between items-center w-full max-w-7xl">
           <div className="flex items-center gap-4">
-  
+            <div className="logo-container">
+              <div className="logo-icon"><RocketLaunch size={44}  weight="duotone" /></div>
+              <h1 className="logo-text">ALGONAUT</h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Enhanced Timer */}
+            <div className="timer-widget">
+              <div className="timer-display">
+                <div className="timer-icon"><Timer size={32}  weight="bold" /></div>
+                <span className="timer-text">{formatTime(timeLeft)}</span>
+              </div>
+              <div className="timer-controls">
+                <button
+                  onClick={() => setTimerRunning(!timerRunning)}
+                  className="timer-btn primary"
+                >
+                  {timerRunning ? <Pause size={18} color="#ffffff" weight="bold" /> : <Play size={18} color="#ffffff" weight="bold" />}
+                </button>
+                <button
+                  onClick={resetTimer}
+                  className="timer-btn secondary"
+                >
+                  <Repeat size={18} color="#ffffff" weight="duotone" />
+                </button>
+              </div>
+            </div>
 
-  <div className="flex items-center bg-[#0e172c]  gap-2 text-white dark:bg-[#7f5af0]  px-4 py-2 rounded-full shadow">
-    <span className="font-mono">{formatTime(timeLeft)}</span>
-    <button
-      onClick={() => setTimerRunning(!timerRunning)}
-      className="text-xs underline"
-    >
-      {timerRunning ? "Pause" : "Start"}
-    </button>
-    <button
-      onClick={resetTimer}
-      className="text-xs underline"
-    >
-      Reset
-    </button>
-  </div>
-
-    <button
-    onClick={() => setDarkMode(!darkMode)}
-    className="px-4 py-2 bg-[#0e172c] hover:bg-gray-600  rounded-full dark:bg-gray-700 text-white dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-  >
-    {darkMode ? "🌞 Light" : "🌙 Dark"}
-  </button>
-
-</div>
-
+            {/* Enhanced Theme Toggle*/}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="theme-toggle"
+            >
+              <div className="theme-toggle-track">
+                <div className={`theme-toggle-thumb ${darkMode ? 'dark' : 'light'}`}>
+                  {darkMode ? <Sun size={32} color="#f5bf42" weight="duotone" /> : <MoonStars size={32} color="#626360" weight="duotone" />}
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="container  grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
-        {/* Left Column: todo and Daily Problems */}
-        <aside className=" lg:col-span-1 flex flex-col gap-6 ">
-          {/* to-do */}
-          <div className="rounded-2xl dcard p-6 shadow-lg">
-  <h2 className="text-xl font-semibold mb-4 text-center">Today’s Target</h2>
+      <div className="container grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+        {/* Enhanced Left Sidebar */}
+        <aside className="lg:col-span-1 flex flex-col gap-6">
+          {/* Enhanced Todo Card */}
+          <div className="glass-card todo-card">
+            <div className="card-header">
+              <h2 className="card-title">
+                <span className="title-icon"></span>
+                Today's Target
+              </h2>
+            </div>
 
-  <div className="flex mb-4">
-    <input
-      type="text"
-      value={newTask}
-      onChange={(e) => setNewTask(e.target.value)}
-      onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      addTask();
-    }
-  }}
-      placeholder="Add a new task..."
-      className="flex-grow px-1.5 py-2 rounded-l-lg bg-[#D9D4E7] dark:bg-[#212121] text-[#0e172c] dark:text-white border border-gray-600 focus:outline-none"
-    />
-    <button
-      onClick={addTask}
-      className="pl-2 py-2 bg-[#0e172c] hover:bg-gray-700 dark:bg-[#7f5af0]   text-white rounded-r-lg pr-2 dark:hover:bg-purple-700 transition-colors"
-    >
-      Add
-    </button>
-  </div>
+            <div className="todo-input-container">
+              <input
+                type="text"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    addTask();
+                  }
+                }}
+                placeholder="Add a new task..."
+                className="todo-input"
+              />
+              <button
+                onClick={addTask}
+                className="add-btn"
+              >
+                <span>+</span>
+              </button>
+            </div>
 
-  <ul className="space-y-3">
-    {tasks.map((task, index) => (
-      <li key={index} className="flex items-center justify-between border border-gray-600 bg-[#0D0D0D] p-3 rounded-lg">
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={task.completed}
-            onChange={() => toggleTask(index)}
-            className="accent-[#7f5af0] w-5 h-5"
-          />
-          <span className={task.completed ? "line-through text-gray-400" : "text-white"}>
-            {task.text}
-          </span>
-        </div>
-        <button
-          onClick={() => deleteTask(index)}
-          className="rounded-full text-red-400 hover:text-red-600 transition-colors"
-        >
-          ❌
-        </button>
-      </li>
-    ))}
-  </ul>
-</div>
+            <ul className="todo-list">
+              {tasks.map((task, index) => (
+                <li key={index} className="todo-item">
+                  <div className="todo-content">
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => toggleTask(index)}
+                      className="todo-checkbox"
+                    />
+                    <span className={`todo-text ${task.completed ? 'completed' : ''}`}>
+                      {task.text}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => deleteTask(index)}
+                    className="delete-btn"
+                  >
+                    <Trash size={28} weight="bold" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-
-          {/* Daily Problems */}
-          <div className="rounded-2xl dcard p-6  shadow-lg">
-            <h2 className="text-xl rounded-2xl  pl-2px  font-semibold mb-4 text-center">BLIND 5</h2>
-            <div className="w-3/3 mx-auto border-t border-gray-600 mb-4 opacity-50"></div>
-            <ul className="space-y-3">
+          {/* Enhanced Problems Card */}
+          <div className="glass-card problems-card">
+            <div className="card-header">
+              <h2 className="card-title">
+                <span className="title-icon"></span>
+                BLIND 5
+              </h2>
+            </div>
+            
+            <ul className="problems-list">
               {randomProblems.map((problem, idx) => (
-                <li key={idx} className="p-3 ">
+                <li key={idx} className="problem-item">
                   <a
                     href={problem.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#0e172c] dark:text-[#fffffe] hover:underline text-center block"
+                    className="problem-link"
                   >
-                    {problem.title}
+                    <span className="problem-number">{idx + 1}</span>
+                    <span className="problem-title">{problem.title}</span>
+                    <span className="external-icon">🔗</span>
                   </a>
                 </li>
               ))}
             </ul>
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={generateRandomProblems}
-                className="px-4 py-2 rounded-2xl bg-[#0e172c] text-[#fffffe] hover:bg-gray-700 dark:bg-[#7f5af0] dark:text-white dark:hover:bg-purple-700 transition-colors"
-
-              >
-                Refresh Problems
-              </button>
-            </div>
+            
+            <button
+              onClick={generateRandomProblems}
+              className="refresh-btn"
+            >
+              <span className="btn-icon"></span>
+              Refresh Problems
+            </button>
           </div>
         </aside>
 
-        {/* Main Content - Right Side (Expanded) */}
+        {/* Enhanced Main Content */}
         <main className="lg:col-span-3 flex flex-col gap-6">
-          <div className="dcard p-6 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-center">Ask Any DSA Question</h2>
-            <textarea
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      handleAsk();
-    }
-  }}
-              rows={5}
-              placeholder="Type your question here..."
-              className="w-full p-4 rounded-lg  border-gray-300 dark:border-[#212121] bg-[#D9D4E7] dark:bg-[#212121] text-gray-900 dark:text-gray-100 focus:outline-none resize-y"
-
-            />
-            <div className="flex justify-center mt-4">
+          {/* Enhanced Query Card */}
+          <div className="glass-card query-card">
+            <div className="card-header">
+              <h2 className="card-title">
+                <span className="title-icon"></span>
+                Ask Any DSA Question
+              </h2>
+            </div>
+            
+            <div className="query-container">
+              <textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAsk();
+                  }
+                }}
+                rows={5}
+                placeholder="Type your question here... (Press Enter to ask, Shift+Enter for new line)"
+                className="query-textarea"
+              />
+              
               <button
                 onClick={handleAsk}
                 disabled={loading}
-                className="px-6 py-3 rounded-2xl bg-[#0e172c] hover:bg-[#3a4466] dark:bg-[#7f5af0] text-white dark:hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="ask-btn"
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Thinking...
+                    <div className="loading-spinner"></div>
+                    <span>Thinking...</span>
                   </>
                 ) : (
-                  "Ask"
+                  <>
+                    <span className="btn-icon"><RocketLaunch size={26} color="#ffffff" weight="duotone" /></span>
+                    <span>Ask ALGONAUT</span>
+                  </>
                 )}
               </button>
             </div>
           </div>
 
+          {/* Enhanced Response Card */}
           {response && (
-            <div className="dcard p-6 rounded-2xl shadow-lg animate-fadeIn">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Response :</h3>
+            <div className="glass-card response-card animate-slideIn">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <span className="title-icon"><RocketLaunch size={28}  weight="duotone" /></span>
+                  Response
+                </h3>
                 <button
                   onClick={handleCopyResponse}
-                  className={`px-4 py-2 rounded-full text-sm ${copied ? "bg-green-600" : "bg-gray-700"} text-white hover:bg-gray-600 bg-[#0e172c] dark:bg-[#7f5af0] dark:hover:bg-purple-700 transition-colors`}
+                  className={`copy-btn ${copied ? 'copied' : ''}`}
                 >
-                  {copied ? "Copied!" : "Copy Response"}
+                  <span className="btn-icon">{copied ? <CheckCircle size={20}  weight="duotone" /> : <Copy size={16}  weight="duotone" />}</span>
+                  {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
-              <div className="markdown-content">
+              
+              <div className="response-content">
                 <ReactMarkdown>{response}</ReactMarkdown>
               </div>
             </div>
           )}
+
+          {/* Enhanced Notes Card */}
+          <div className="glass-card notes-card">
+            <div className="card-header">
+              <h2 className="card-title">
+                <span className="title-icon"><Notepad size={32}  weight="duotone" /> </span>
+                Quick Notes
+              </h2>
+            </div>
+            
+            <textarea
+              value={notes}
+              spellCheck={false}
+              onChange={handleNotesChange}
+              rows={6}
+              placeholder="Write your patterns, tricks, or key notes here..."
+              className="notes-textarea"
+            />
+          </div>
         </main>
-
-           {/* ✅ Quick DSA Notes */}
-  <div className="rounded-2xl dcard p-6 shadow-lg">
-    <h2 className="text-xl font-semibold mb-4 text-center"> Quick DSA Notes</h2>
-    <textarea
-      value={notes}
-      spellCheck={false}
-      onChange={handleNotesChange}
-      rows={6}
-      placeholder="Write your patterns, tricks, or key notes here..."
-      className="w-full font-bold p-4 rounded-lg bg-[#D9D4E7] border border-gray-600 dark:bg-[#212121] dark:text-gray-100 focus:outline-none resize-y"
-    />
-  </div>
-
       </div>
     </div>
   );
