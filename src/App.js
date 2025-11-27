@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { Trash, Timer, Play, Pause,Repeat, MoonStars, Sun, RocketLaunch,Notepad,Copy,CheckCircle } from "phosphor-react";
 import "./App.css";
 
-const ai = new GoogleGenerativeAI(process.env.REACT_APP_GENAI_API_KEY);
+const ai = new GoogleGenerativeAI("AIzaSyAeLQezNbhGCCP10XKtH7cVQK98K0mfz7I");
 
 
 function App() {
